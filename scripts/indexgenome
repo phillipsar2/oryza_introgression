@@ -1,0 +1,2 @@
+bwa index data/genome/*.fna.gz
+satmools faidx data/genome/*.fna.gz

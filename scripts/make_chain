@@ -1,0 +1,25 @@
+#!/bin/bash -l
+#  SBATCH -D /group/jrigrp10/aphillip/oryza/
+#  SBATCH -J make_chain
+#  SBATCH -o /group/jrigrp10/aphillip/oryza/slurmlog/makechain-out-%j.txt
+#  SBATCH -e /group/jrigrp10/aphillip/oryza/slurmlog/makechain-error-%j.txt
+
+# Activate conda env snowflake prior to submitting screen
+
+# Load required programs
+module load minimap2
+
+# Target and query are the masked genomes (doesn't matter which is which)
+target=data/genome/masked_genomes/Oryza_glumipatula.Oryza_glumaepatula_v1.5.dna_rm.toplevel.fa.gz
+query=data/genome/masked_genomes/Oryza_indica.ASM465v1.dna_rm.toplevel.fa.gz
+out=data/genome/masked_genomes/sativa_glum_alignment.sam
+
+# Align genomes. Use minimap2 to generate sam file. Convert to bam.
+minimap2 -ax asm5 --eqx -t 16 $target $query -o $out
+samtools view --threads 16 -b -o ${out%.*}.bam ${out}
+
+#Convert to PSL format
+bamToPsl -dots=100 ${out%.*}.bam ${out%.*}.psl
+
+# Use jcvi wrapper to finish generating the chain file
+python -m jcvi.formats.chain frompsl ${out%.*}.psl $target $query
