@@ -1,0 +1,130 @@
+{
+    "__default__" :
+    {
+      "p" : "med2",
+      "mem" : "16G",
+      "time" : "7-00:00",
+      "name": "rando",
+    },
+    "bwa_map" :
+    {
+      "mem": "32G",
+# typically 64
+      "p" : "med2",
+      "time" : "7-00:00",
+      "name" : "bwa_map",
+    },
+    "samtools_sort" :
+    {
+      "p" : "med2",
+      "mem" : "16G",
+# typically 32 or 48
+      "time" : "7-00:00",
+      "name " : "samtools_sort",
+    },
+    "samtools_samtobam" :
+    {
+      "p" : "med2",
+      "mem" : "16G",
+      "time" : "7-00:00",
+      "time" : "samtobam",
+    },
+
+    "bed_coverage" :
+    {
+      "p" : "med2",
+      "mem" : "4G",
+      "time" : "7-00:00"
+    },
+    "mark_dups" :
+    {
+      "p" : "med2",
+      "mem" : "40G",
+      "time" : "7-00:00",
+      "name" : "mark_dups",
+    },
+    "bamqc" :
+    {
+      "p" : "med2",
+      "mem" : "48G",
+      "time" : "7-00:00",
+      "name" : "bamqc",
+    },
+    "haplotype_caller" :
+    {
+      "p" : "med2",
+      "mem" : "16G",
+      "time" : "7-00:00",
+      "name" : "haplotype_caller"
+    },
+    "split_intervals" :
+    {
+      "p" : "med2",
+      "mem" : "8G",
+      "time" : "7-00:00",
+      "name" : "split_intervals"
+    },
+    "bgzip_vcfs" :
+    {
+      "p" : "med2",
+      "mem" : "4G",
+      "time" : "2-00:00",
+      "name" : "bgzip_vcfs"
+    },
+    "combine_gvcfs" :
+    {
+      "p" : "med2",
+      "mem" : "40G",
+      "time" : "7-00:00",
+      "name" : "combine_gvcfs"
+    },
+    "joint_genotyping" :
+    {
+      "p" : "med2",
+      "mem" : "32G",
+      "time" : "7-00:00",
+      "name" : "jointgenotyping"
+    },
+    "get_snps" :
+    {
+      "p" : "med2",
+      "mem" : "32G",
+      "time" : "7-00:00",
+      "name" : "get_snps"
+    },
+    "filter_snps" :
+    {
+      "p" : "med2",
+      "mem" : "32G",
+      "time" : "7-00:00",
+      "name" : "filter_snps"
+    },
+    "diagnostics" :
+    {
+      "p" : "med2",
+      "mem" : "32G",
+      "time" : "7-00:00",
+      "name" : "diagnostics"
+    },
+    "filter_depth" :
+    {
+      "p" : "med2",
+      "mem" : "32G",
+      "time" : "7-00:00",
+      "name" : "filter_depth"
+    },
+    "filter_nocall" :
+    {
+      "p" : "med2",
+      "mem" : "32G",
+      "time" : "7-00:00",
+      "name" : "diagnostics"
+    },
+    "combine_vcfs" :
+    {
+      "p" : "med2",
+      "mem" : "10G",
+      "time" : "7-00:00",
+      "name" : "combine_vcfs"
+    },
+}
