@@ -141,3 +141,30 @@ rule depth:
         -V {input.vcf} \
         -F CHROM -F POS -GF DP \
         -O {output.dp}")
+
+
+# Filter the whole-genome file
+
+rule filter_wholegenome:
+    input:
+        vcf = "data/raw/vcf_bpres/{count}.raw.vcf",
+        ref = config.ref
+    output:
+        dp = "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.wholegenome.vcf",
+        dp2 = "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.wholegenome.vcf"
+    run:
+        shell("gatk VariantFiltration \
+        -R {input.ref} \
+        -V {input.vcf} \
+        -G-filter \"DP < 3 || DP > 77\" \
+        -G-filter-name \"DP_3-77\" \
+        --set-filtered-genotype-to-no-call true -O {output.dp}")
+        shell("gatk SelectVariants -V {output.dp} --max-nocall-fraction 0 --exclude-filtered true --restrict-alleles-to BIALLELIC -O {output.dp2}")
+
+rule combine_wgenomevcfs:
+    input:
+        expand("data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.wholegenome.vcf", count = INTERVALS)
+    output:
+        "data/processed/filtered_snps_bpres/oglum_wholegenome.vcf.gz"
+    run:
+        shell("bcftools concat {input} -Oz -o {output}")

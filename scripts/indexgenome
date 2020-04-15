@@ -1,2 +1,5 @@
-bwa index data/genome/*.fna.gz
-satmools faidx data/genome/*.fna.gz
+genome = GCA_009829375.1_Os125827RS1_genomic.fna
+
+bwa index $genome
+samtools faidx $genome
+gatk CreateSequenceDictionary -R $genome 
