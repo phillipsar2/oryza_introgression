@@ -5,7 +5,7 @@ rule haplotype_caller:
     output:
         outdir = "data/gvcf/{sample}.g.vcf"
     params:
-        regions = "data/genome/contig.list"
+        regions = config.contig_list
     run:
         shell("gatk HaplotypeCaller \
         --input {input.bam} \
@@ -20,22 +20,15 @@ rule haplotype_caller:
 # Scatter reference into intervals using SplitIntervals. Set intervals in Snakefile.
 # https://gatk.broadinstitute.org/hc/en-us/articles/360036348372-SplitIntervals
 # ``--scatter-count n` splits reference into n intervals
-## This rule doesn't work right now
-#rule split_intervals:
-#    input:
-#        ref = config.ref
-#    output:
-#        expand("data/processed/scattered_intervals/{count}-scattered.intervals", count = INTERVALS)
-#    params:
-#        regions = "data/genome/contig.list",
-#        count = len(INTERVALS),
-#        outdir = "data/processed/scattered_intervals"
-#    run:
-#        shell("gatk SplitIntervals \
-#        -R {input.ref} \
-#        -L {params.regions} \
-#        --scatter-count {params.count} \
-#        -O {params.outdir}")
+rule split_intervals:
+    input:
+        ref = config.ref
+    output:
+        expand("data/processed/scattered_intervals/{count}-scattered.interval_list", count = INTERVALS)
+    params:
+        regions = config.contig_list
+    run:
+        shell("gatk SplitIntervals -R {input.ref} -L {params.regions} --scatter-count 200 -O data/processed/scattered_intervals")
 
 # Combine GVCFs with GenomicsDBImport
 # sample_map file is samplename with path/to/gvcf in the following line
