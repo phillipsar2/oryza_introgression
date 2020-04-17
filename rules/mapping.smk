@@ -35,8 +35,8 @@ rule bwa_map:
         ref = config.ref,
 #        r1 = "data/rawdata/{sample}-R1.fastq",
 #        r2 = "data/rawdata/{sample}-R2.fastq"
-        r1 = "data/rawdata/{sample}_1.fq.gz",
-        r2 = "data/rawdata/{sample}_2.fq.gz"
+        r1 = "data/rawdata/trimmed/{sample}.forward.1.fq",
+        r2 = "data/rawdata/trimmed/{sample}.reverse.2.fq"
     output:
         temp("data/interm/mapped_bam/{sample}.mapped.bam")
     log:
