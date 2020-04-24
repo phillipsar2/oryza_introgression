@@ -6,6 +6,8 @@ import config
 # Sample names
 #SAMPLE = glob_wildcards("data/rawdata/{sample}-R1.fastq").sample
 SAMPLE = glob_wildcards("data/rawdata/{sample}_1.fq.gz").sample
+# Testing a singular sample
+#SAMPLE = ["IRIS_313-10274_120220_I297_FCC0DJBACXX_L6_RICwdsRSYHSD24-3-IPAAPEK-84"]
 
 # Set number of intervals for gatk to 200
 INTERVALS = ["{:04d}".format(x) for x in list(range(200))]
@@ -19,12 +21,12 @@ rule all:
         # Aligning reads
 #        markdups = expand("data/interm/mark_dups/{sample}.dedup.bam", sample = SAMPLE),
         # Assess quality of mapped reads
-#        bamqc = expand("reports/bamqc/{sample}_stats/qualimapReport.html", sample = SAMPLE),
+#        bamqc = expand("reports/bamqc/fastp/{sample}_stats/qualimapReport.html", sample = SAMPLE),
         # SNP calling
 #        hap_caller = expand("data/gvcf/{sample}.g.vcf", sample = SAMPLE),
-        split_int = expand("data/processed/scattered_intervals/{count}-scattered.interval_list", count = INTERVALS)
-#        directory("data/interim/combined_database_bpres/200")
-#        expand("data/raw/vcf_bpres/{count}.raw.vcf", count = INTERVALS)
+#        split_int = expand("data/processed/scattered_intervals/domesticated/{count}-scattered.interval_list", count = INTERVALS)
+        combine = expand(directory("data/interim/combined_database_bpres/domesticated/{count}"), count = INTERVALS)
+#        joint_geno = expand("data/raw/vcf_bpres/domesticated/{count}.raw.vcf", count = INTERVALS)
 #        base_filter = expand("data/processed/filtered_snps_bpres/{count}.filtered.snps.vcf", count = INTERVALS),
 #        diagnostics = expand("reports/filtering/gvcf_{count}.table", count = INTERVALS)
 #        dp = expand("data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.snps.vcf", count = INTERVALS),

@@ -24,11 +24,14 @@ rule split_intervals:
     input:
         ref = config.ref
     output:
-        expand("data/processed/scattered_intervals/{count}-scattered.interval_list", count = INTERVALS)
+        expand("data/processed/scattered_intervals/domesticated/{count}-scattered.interval_list", count = INTERVALS)
+#        config.ref_int
+#        expand("data/processed/scattered_intervals/{count}-scattered.interval_list", count = INTERVALS)
     params:
-        regions = config.contig_list
+        regions = config.contig_list,
+        dir = config.int_dir
     run:
-        shell("gatk SplitIntervals -R {input.ref} -L {params.regions} --scatter-count 200 -O data/processed/scattered_intervals")
+        shell("gatk SplitIntervals -R {input.ref} -L {params.regions} --scatter-count 200 -O {params.dir}")
 
 # Combine GVCFs with GenomicsDBImport
 # sample_map file is samplename with path/to/gvcf in the following line
@@ -37,14 +40,16 @@ rule split_intervals:
 rule combine_gvcfs:
     input:
         gvcfs = expand("data/gvcf/{sample}.g.vcf", sample = SAMPLE),
-        region = "data/processed/scattered_intervals/{count}-scattered.interval_list",
-        map = "data/processed/sample_map"
+        region = config.int_region,
+#        region = "data/processed/scattered_intervals/{count}-scattered.interval_list",
+        map = config.sample_map
     output:
-        directory("data/interim/combined_database_bpres/{count}")
+#        directory("data/interim/combined_database_bpres/{count}")
+        directory("data/interim/combined_database_bpres/domesticated/{count}")
+#        config.comb_dir
     params:
 #        region = "data/processed/scattered_intervals/{count}-scattered.intervals_list",
         tmp = "/scratch/aphillip/genomicsdbimport/{count}"
-#        map = "data/processed/sample_map"
     run:
         shell("mkdir -p {params.tmp}")
         shell("gatk --java-options \"-Xmx80g -Xms80g\" \
@@ -53,20 +58,23 @@ rule combine_gvcfs:
         --batch-size 50 \
         --reader-threads 8 \
         --sample-name-map {input.map} \
-        --intervals {input.region} \
-        --tmp-dir {params.tmp}")
+        --intervals {input.region} --tmp-dir {params.tmp}")
         shell("rm -rf {params.tmp}")
 
 
 rule joint_geno:
     input:
-        dir = directory("data/interim/combined_database_bpres/{count}"),
+#        dir = directory("data/interim/combined_database_bpres/{count}"),
+        dir = config.comb_dir,
         ref = config.ref
     output:
-        "data/raw/vcf_bpres/{count}.raw.vcf"
+        config.joint_out
+#        "data/raw/vcf_bpres/domesticated/{count}.raw.vcf"
     params:
-        db = "gendb://data/interim/combined_database_bpres/{count}",
-        region = "data/processed/scattered_intervals/{count}-scattered.interval_list"
+#        db = "gendb://data/interim/combined_database_bpres/domesticated/{count}",
+        db = config.db,
+#        region = "data/processed/scattered_intervals/{count}-scattered.interval_list"
+        region = config.int_region
     run:
         shell("gatk GenotypeGVCFs \
         -R {input.ref} \
