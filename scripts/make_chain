@@ -10,16 +10,16 @@
 module load minimap2
 
 # Target and query are the masked genomes (doesn't matter which is which)
-target=data/genome/masked_genomes/Oryza_glumipatula.Oryza_glumaepatula_v1.5.dna_rm.toplevel.fa.gz
-query=data/genome/masked_genomes/Oryza_indica.ASM465v1.dna_rm.toplevel.fa.gz
-out=data/genome/masked_genomes/sativa_glum_alignment.sam
+#target=data/genome/masked_genomes/Oryza_glumipatula.Oryza_glumaepatula_v1.5.dna_rm.toplevel.fa.gz
+#query=data/genome/masked_genomes/Oryza_indica.ASM465v1.dna_rm.toplevel.fa.gz
+#out=data/genome/masked_genomes/sativa_glum_alignment.sam
 
 # Align genomes. Use minimap2 to generate sam file. Convert to bam.
-minimap2 -ax asm5 --eqx -t 16 $target $query -o $out
-samtools view --threads 16 -b -o ${out%.*}.bam ${out}
+minimap2 -ax asm5 --eqx -t 16 data/genome/masked_genomes/Oryza_glumipatula.Oryza_glumaepatula_v1.5.dna_rm.toplevel.fa.gz data/genome/masked_genomes/Oryza_indica.ASM465v1.dna_rm.toplevel.fa.gz -o data/genome/masked_genomes/sativa_glum_alignment.sam
+samtools view --threads 16 -b -o data/genome/masked_genomes/sativa_glum_alignment.bam data/genome/masked_genomes/sativa_glum_alignment.sam
 
 #Convert to PSL format
-bamToPsl -dots=100 ${out%.*}.bam ${out%.*}.psl
+bamToPsl -dots=100 data/genome/masked_genomes/sativa_glum_alignment.bam data/genome/masked_genomes/sativa_glum_alignment.psl
 
 # Use jcvi wrapper to finish generating the chain file
-python -m jcvi.formats.chain frompsl ${out%.*}.psl $target $query
+python -m jcvi.formats.chain frompsl data/genome/masked_genomes/sativa_glum_alignment.psl data/genome/masked_genomes/Oryza_glumipatula.Oryza_glumaepatula_v1.5.dna_rm.toplevel.fa.gz data/genome/masked_genomes/Oryza_indica.ASM465v1.dna_rm.toplevel.fa.gz

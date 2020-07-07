@@ -3,9 +3,11 @@
 rule get_snps:
     input:
         ref = config.ref,
-        vcf = "data/raw/vcf_bpres/{count}.raw.vcf"
+        vcf = config.joint_out
+#        vcf = "data/raw/vcf_bpres/{count}.raw.vcf"
     output:
-        "data/raw/vcf_bpres/{count}.raw.snps.vcf"
+        config.get_snps_out
+#        "data/raw/vcf_bpres/{count}.raw.snps.vcf"
     run:
         shell("gatk SelectVariants \
         -R {input.ref} \
@@ -24,10 +26,9 @@ rule get_snps:
 rule filter_snps:
     input:
         ref = config.ref,
-#        vcf = ancient("data/raw/vcf_bpres/{count}.raw.snps.vcf")        
-        vcf = "data/raw/vcf_bpres/{count}.raw.snps.vcf"
+        vcf = config.get_snps_out
     output:
-        "data/processed/filtered_snps_bpres/{count}.filtered.snps.vcf"
+        config.hard_filt
     run:
         shell("gatk VariantFiltration \
         -V {input.vcf} \
@@ -46,10 +47,11 @@ rule filter_snps:
 
 rule diagnostics:
     input: 
-        vcf = "data/processed/filtered_snps_bpres/{count}.filtered.snps.vcf",
+        vcf = config.hard_filt,
         ref = config.ref
     output:
-        "reports/filtering/gvcf_{count}.table"
+        config.diag
+#        "reports/filtering/gvcf_{count}.table"
     run:
         shell("gatk VariantsToTable \
         -R {input.ref} \
@@ -58,113 +60,110 @@ rule diagnostics:
         -O {output}")
 
 
-# Filter SNPs to only biallelic and sites shared by all induviduals
+# Filter SNPs to only biallelic
+# --max-nocall-fraction is 0 for O. glum and 0.33 for O. sativa
 
 rule filter_nocall:
     input:
         ref = config.ref,
-        vcf = "data/processed/filtered_snps_bpres/{count}.filtered.snps.vcf"
+        vcf = config.hard_filt
     output:
-        "data/processed/filtered_snps_bpres/{count}.filtered.nocall.vcf"
+        config.nocall
     run: 
-        shell("gatk SelectVariants -V {input.vcf} --max-nocall-fraction 0 --exclude-filtered true  --restrict-alleles-to BIALLELIC -O {output}")
+        shell("gatk SelectVariants -V {input.vcf} --max-nocall-fraction 0.5 --exclude-filtered true  --restrict-alleles-to BIALLELIC -O {output}")
         
 
 # Diagnositc filters look good. Continue filtering for depth. 
 
+# Evaluate depth across samples to set DP filter
+
+#rule depth:
+#    input:
+#        vcf = "data/processed/filtered_snps_bpres/oryza_glum.vcf.gz",
+#        vcf = "data/processed/filtered_snps_bpres/depth_analysis.vcf.gz",
+#        ref = config.ref
+#    output:
+#        dp = config.depth_table
+#    run:
+#        shell("tabix -p vcf {input.vcf}")
+#        shell("gatk VariantsToTable \
+#        -R {input.ref} \
+#        -V {input.vcf} \
+#        -F CHROM -F POS -GF DP \
+#        -O {output.dp}")
+
+# Fitlter by depth of each individual
+# O. glum samples filtered 3 < DP < 77 (inbreeding)
+# O. sativa samples filtered 3 < DP < 90 (intbreeding)
+
 rule filter_depth:
     input:
-        vcf = "data/processed/filtered_snps_bpres/{count}.filtered.nocall.vcf",
+        vcf = config.nocall,
         ref = config.ref
     output:
-        dp = "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.snps.vcf",
-        dp2 = "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.snps.vcf"
+        dp = config.filt_dp1
     run:
         shell("gatk VariantFiltration \
         -R {input.ref} \
         -V {input.vcf} \
-        -G-filter \"DP < 3 || DP > 77\" \
-        -G-filter-name \"DP_3-77\" \
+        -G-filter \"DP < 3 || DP > 90\" \
+        -G-filter-name \"DP_3-90\" \
         --set-filtered-genotype-to-no-call true -O {output.dp}")
-        shell("gatk SelectVariants -V {output.dp} --max-nocall-fraction 0 --exclude-filtered true --restrict-alleles-to BIALLELIC -O {output.dp2}")
 
-
-
-# Use vcftools to filter max DP less than or equal to mean DP (for each induvidual)
-# Not in use
-
-rule filter_maxdepth:
+rule depth_nocall:
     input:
-        vcf = "data/processed/filtered_snps_bpres/{count}.filtered.dp_min3.snps.vcf",
-#        dp = "data/processed/filtered_snps_bpres/{count}.filtered.dp_min3_maxmean.snps.vcf"
+        config.filt_dp1
     output:
-        dp = "data/processed/filtered_snps_bpres/{count}.filtered.dp_min3_maxmean.snps.vcf"
-#        dp2 = "data/processed/filtered_snps_bpres/{count}.filtered.dp_min3_maxmean.nocall.snps.vcf"  
-    params:
-        out = "{count}.filtered.dp_min3_maxmean.snps"
+        config.filt_dp2
     run:
-        shell("vcftools --vcf {input} --max-meanDP -c > {output.dp}")
-#        shell("gatk SelectVariants -V {input.dp} --max-nocall-fraction 0 --exclude-filtered true --restrict-alleles-to BIALLELIC -O {output.dp2}")
+        shell("gatk SelectVariants -V {input} --exclude-filtered true -O {output}")
 
+# gzip vcfs
 
 rule bgzip_vcf:
     input:
-        "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.snps.vcf"
+        config.filt_dp2
     output:
-        "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.snps.vcf.gz"
+        config.bgz_vcf
     run:
         shell("bgzip {input}")
         shell("tabix -p vcf {output}")
 
+# Combine individual vcfs with bcftools
 
 rule combine_vcfs:
     input:
-        expand("data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.snps.vcf.gz", count = INTERVALS)
+        expand(config.bgz_vcf, count = INTERVALS)
     output:
-        "data/processed/filtered_snps_bpres/oryza_glum.vcf.gz"
+        config.combine
     run:
         shell("bcftools concat {input} -Oz -o {output}")
 
 
-rule depth:
-    input:
-#        vcf = "data/processed/filtered_snps_bpres/oryza_glum.vcf.gz",
-        vcf = "data/processed/filtered_snps_bpres/depth_analysis.vcf.gz",
-        ref = config.ref
-    output:
-#        dp = "reports/filtering_bpres/oryza_glum.table"
-        dp = "reports/filtering_bpres/depth_analysis.table"
-    run:
-        shell("tabix -p vcf {input.vcf}")
-        shell("gatk VariantsToTable \
-        -R {input.ref} \
-        -V {input.vcf} \
-        -F CHROM -F POS -GF DP \
-        -O {output.dp}")
-
 
 # Filter the whole-genome file
+# Change the DP filter maximum depending on the genome being analyzed
 
 rule filter_wholegenome:
     input:
-        vcf = "data/raw/vcf_bpres/{count}.raw.vcf",
+        vcf = config.joint_out,
         ref = config.ref
     output:
-        dp = "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.wholegenome.vcf",
-        dp2 = "data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.wholegenome.vcf"
+        dp = config.whole_dp1,
+        dp2 = config.whole_dp2
     run:
         shell("gatk VariantFiltration \
         -R {input.ref} \
         -V {input.vcf} \
-        -G-filter \"DP < 3 || DP > 77\" \
-        -G-filter-name \"DP_3-77\" \
+        -G-filter \"DP < 3 || DP > 90\" \
+        -G-filter-name \"DP_3-90\" \
         --set-filtered-genotype-to-no-call true -O {output.dp}")
-        shell("gatk SelectVariants -V {output.dp} --max-nocall-fraction 0 --exclude-filtered true --restrict-alleles-to BIALLELIC -O {output.dp2}")
+        shell("gatk SelectVariants -V {output.dp} --exclude-filtered true -O {output.dp2}")
 
 rule combine_wgenomevcfs:
     input:
-        expand("data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.wholegenome.vcf", count = INTERVALS)
+        expand(config.whole_dp2, count = INTERVALS)
     output:
-        "data/processed/filtered_snps_bpres/oglum_wholegenome.vcf.gz"
+        config.whole_genome
     run:
         shell("bcftools concat {input} -Oz -o {output}")

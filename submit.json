@@ -64,7 +64,7 @@
       "time" : "7-00:00",
       "name" : "split_intervals"
     },
-    "bgzip_vcfs" :
+    "bgzip_vcf" :
     {
       "p" : "med2",
       "mem" : "4G",
@@ -74,7 +74,7 @@
     "combine_gvcfs" :
     {
       "p" : "med2",
-      "mem" : "40G",
+      "mem" : "96G",
       "time" : "7-00:00",
       "name" : "combine_gvcfs"
     },
@@ -88,14 +88,14 @@
     "get_snps" :
     {
       "p" : "med2",
-      "mem" : "32G",
+      "mem" : "16G",
       "time" : "7-00:00",
       "name" : "get_snps"
     },
     "filter_snps" :
     {
       "p" : "med2",
-      "mem" : "32G",
+      "mem" : "16G",
       "time" : "7-00:00",
       "name" : "filter_snps"
     },
@@ -109,14 +109,14 @@
     "filter_depth" :
     {
       "p" : "med2",
-      "mem" : "32G",
+      "mem" : "16G",
       "time" : "7-00:00",
       "name" : "filter_depth"
     },
     "filter_nocall" :
     {
       "p" : "med2",
-      "mem" : "32G",
+      "mem" : "16G",
       "time" : "7-00:00",
       "name" : "diagnostics"
     },

@@ -14,14 +14,33 @@
 #        "fastqc -o qc/fastqc -f fastq data/rawdata/*.fq.gz"
 
 
+# Trim domesticated rice reads
+# Trim polyG tails (-g), use 2 threads (-w 2), minimum length is 36 (-l 36), don't filter for qualit (-Q)
+
+#rule fastp_trim:
+#    input:
+#        r1 = "data/rawdata/{sample}_1.fq.gz",
+#        r2 = "data/rawdata/{sample}_2.fq.gz"
+#    output:
+#        p1 = "data/rawdata/trimmed/{sample}.trim_1.fq.gz",
+#        p2 = "data/rawdata/trimmed/{sample}.trim_2.fq.gz",
+#    run:
+#        shell("fastp -g -w 2 -l 36 -Q \
+#        -i {input.r1} -I {input.r2} \
+#        -o {output.p1} -O {output.p2} \
+#        -h reports/fastp/osativa.html")
+
+
 # Align reads to the reference gnome
 rule bwa_map:
     input:
         ref = config.ref,
 #        r1 = "data/rawdata/{sample}-R1.fastq",
 #        r2 = "data/rawdata/{sample}-R2.fastq"
-        r1 = "data/rawdata/{sample}_1.fq.gz",
-        r2 = "data/rawdata/{sample}_2.fq.gz"
+#        r1 = "data/rawdata/{sample}_1.fq.gz",
+#        r2 = "data/rawdata/{sample}_2.fq.gz"
+        r1 = "data/rawdata/trimmed/{sample}.trim_1.fq.gz",
+        r2 = "data/rawdata/trimmed/{sample}.trim_2.fq.gz"
     output:
         temp("data/interm/mapped_bam/{sample}.mapped.bam")
     log:

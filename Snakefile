@@ -5,9 +5,10 @@ import config
 
 # Sample names
 #SAMPLE = glob_wildcards("data/rawdata/{sample}-R1.fastq").sample
-SAMPLE = glob_wildcards("data/rawdata/{sample}_1.fq.gz").sample
+SAMPLE = glob_wildcards("data/rawdata/trimmed/{sample}.trim_1.fq.gz").sample
 # Testing a singular sample
 #SAMPLE = ["IRIS_313-10274_120220_I297_FCC0DJBACXX_L6_RICwdsRSYHSD24-3-IPAAPEK-84"]
+#print(SAMPLE)
 
 # Set number of intervals for gatk to 200
 INTERVALS = ["{:04d}".format(x) for x in list(range(200))]
@@ -17,27 +18,30 @@ rule all:
 #        fastqc = directory("reports/fastqc")
 #        html=expand("qc/fastqc/{fastq}.html", fastq = FASTQ),
 #        zip=expand("qc/fastqc/{fastq}_fastqc.zip", fastq = FASTQ),
-#        trim = expand("data/rawdata/trimmed/{sample}.forward.1.fq", sample = SAMPLE),
+        # Trim reads
+#        trim = expand("data/rawdata/trimmed/{sample}.trim_1.fq.gz", sample = SAMPLE),
         # Aligning reads
-#        markdups = expand("data/interm/mark_dups/{sample}.dedup.bam", sample = SAMPLE),
+#        markdups = expand("data/interm/mark_dups/trim/{sample}.dedup.bam", sample = SAMPLE),
         # Assess quality of mapped reads
 #        bamqc = expand("reports/bamqc/fastp/{sample}_stats/qualimapReport.html", sample = SAMPLE),
         # SNP calling
-#        hap_caller = expand("data/gvcf/{sample}.g.vcf", sample = SAMPLE),
-#        split_int = expand("data/processed/scattered_intervals/domesticated/{count}-scattered.interval_list", count = INTERVALS)
-        combine = expand(directory("data/interim/combined_database_bpres/domesticated/{count}"), count = INTERVALS)
-#        joint_geno = expand("data/raw/vcf_bpres/domesticated/{count}.raw.vcf", count = INTERVALS)
-#        base_filter = expand("data/processed/filtered_snps_bpres/{count}.filtered.snps.vcf", count = INTERVALS),
-#        diagnostics = expand("reports/filtering/gvcf_{count}.table", count = INTERVALS)
-#        dp = expand("data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.snps.vcf", count = INTERVALS),
-#        dp2 = expand("data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.snps.vcf", count = INTERVALS),
-#        bgzip_vcf = expand("data/processed/filtered_snps_bpres/{count}.filtered.dp3_77.nocall.snps.vcf.gz", count = INTERVALS),
-#        combine = "data/processed/filtered_snps_bpres/oryza_glum.vcf.gz",
+#        hap_caller = expand(config.haplo_caller, sample = SAMPLE),
+#        split_int = expand(config.split_intervals, count = INTERVALS)
+#        combine = expand(directory("data/interim/combined_database_bpres/domesticated/trim/{count}"), count = INTERVALS),
+#        joint_geno = expand(config.joint_out, count = INTERVALS),
+#        get_snps = expand(config.get_snps_out, count = INTERVALS),
+#        hard_filter = expand(config.hard_filt, count = INTERVALS),
+#        diagnostics = expand(config.diag, count = INTERVALS)
+#        dp = expand(config.filt_dp1, count = INTERVALS),
+#        dp2 = expand(config.filt_dp2, count = INTERVALS),
+        bgzip_vcf = expand(config.bgz_vcf, count = INTERVALS),
+        combine = config.combine,
 #        depth_diag = "reports/filtering_bpres/oryza_glum.table"
-#        wholegenome = "data/processed/filtered_snps_bpres/oglum_wholegenome.vcf.gz"
+        # Combining fitlering SNPs and INDELs all together - not just the SNPs - then merging the files together
+#        wholegenome = config.whole_genome
 
 # Rules
 #include: "rules/mapping.smk"
 #include: "rules/process_bam.smk"
-include: "rules/calling.smk"
-#include: "rules/filtering.smk"
+#include: "rules/calling.smk"
+include: "rules/filtering.smk"

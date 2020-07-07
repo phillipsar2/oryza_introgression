@@ -24,9 +24,9 @@ rule mark_dups:
     input:
         config.mark_in
     output:
-        bam = "data/interm/mark_dups/{sample}.dedup.bam",
-        index = "data/interm/mark_dups/{sample}.dedup.bai",
-        metrics = "qc/mark_dup/{sample}_metrics.txt"
+        bam = "data/interm/mark_dups/trim/{sample}.dedup.bam",
+        index = "data/interm/mark_dups/trim/{sample}.dedup.bai",
+        metrics = "qc/mark_dup/trim/{sample}_metrics.txt"
     params:
         tmp = "/scratch/aphillip/mark_dups/{sample}"
     run:

@@ -1,9 +1,9 @@
 rule haplotype_caller:
     input:
         ref = config.ref, 
-        bam = "data/interm/mark_dups/{sample}.dedup.bam"
+        bam = "data/interm/mark_dups/trim/{sample}.dedup.bam"
     output:
-        outdir = "data/gvcf/{sample}.g.vcf"
+        outdir = "data/gvcf/trim/{sample}.g.vcf"
     params:
         regions = config.contig_list
     run:
@@ -39,20 +39,20 @@ rule split_intervals:
 
 rule combine_gvcfs:
     input:
-        gvcfs = expand("data/gvcf/{sample}.g.vcf", sample = SAMPLE),
+        gvcfs = expand("data/gvcf/trim/{sample}.g.vcf", sample = SAMPLE),
         region = config.int_region,
 #        region = "data/processed/scattered_intervals/{count}-scattered.interval_list",
         map = config.sample_map
     output:
 #        directory("data/interim/combined_database_bpres/{count}")
-        directory("data/interim/combined_database_bpres/domesticated/{count}")
+        directory("data/interim/combined_database_bpres/domesticated/trim/{count}")
 #        config.comb_dir
     params:
 #        region = "data/processed/scattered_intervals/{count}-scattered.intervals_list",
         tmp = "/scratch/aphillip/genomicsdbimport/{count}"
     run:
         shell("mkdir -p {params.tmp}")
-        shell("gatk --java-options \"-Xmx80g -Xms80g\" \
+        shell("gatk --java-options \"-Xmx90g -Xms90g\" \
         GenomicsDBImport \
         --genomicsdb-workspace-path {output} \
         --batch-size 50 \
@@ -65,7 +65,7 @@ rule combine_gvcfs:
 rule joint_geno:
     input:
 #        dir = directory("data/interim/combined_database_bpres/{count}"),
-        dir = config.comb_dir,
+        dir = directory(config.comb_dir),
         ref = config.ref
     output:
         config.joint_out
