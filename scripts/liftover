@@ -9,44 +9,49 @@
 module load bio
 module load minimap2
 
+# Assign file names
+glum="data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.fna"
+sativa="data/genome/GCA_000004655.2_ASM465v1_genomic.fna"
+out="glum_sativa_asm20.sam"
+
 # Align genomes. Use minimap2 to generate sam file. Convert to bam.
-minimap2 -ax asm5 --eqx -t 16 data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.fna data/genome/GCA_000004655.2_ASM465v1_genomic.fna -o data/genome/rm_genomes/sativa_glum_alignment.sam
-samtools view --threads 16 -b -o data/genome/rm_genomes/sativa_glum_alignment.bam data/genome/rm_genomes/sativa_glum_alignment.sam
+#minimap2 -ax asm5 --eqx -t 16 $glum $sativa -o $out
+samtools view --threads 16 -b -o ${out%.*}.bam $out
 
 #Convert to PSL format
-bamToPsl -dots=100 data/genome/rm_genomes/sativa_glum_alignment.bam data/genome/rm_genomes/sativa_glum_alignment.psl
+bamToPsl -dots=100 ${out%.*}.bam ${out%.*}.psl
 
 # Prepare reference genomes
-faToTwoBit data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.fna data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.2bit
-faToTwoBit data/genome/GCA_000004655.2_ASM465v1_genomic.fna data/genome/GCA_000004655.2_ASM465v1_genomic.2bit
+#faToTwoBit data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.fna data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.2bit
+#faToTwoBit data/genome/GCA_000004655.2_ASM465v1_genomic.fna data/genome/GCA_000004655.2_ASM465v1_genomic.2bit
 
 # Translate psl files to chains
-axtChain -linearGap=medium -psl data/genome/rm_genomes/sativa_glum_alignment.psl \
+axtChain -linearGap=medium -psl ${out%.*}.psl \
 data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.2bit \
 data/genome/GCA_000004655.2_ASM465v1_genomic.2bit \
-data/genome/rm_genomes/sativa_to_glum.chain
+${out%.*}.chain
 
 # Sort chain
-chainSort data/genome/rm_genomes/sativa_to_glum.chain data/genome/rm_genomes/sativa_to_glum.sorted.chain
+chainSort ${out%.*}.chain ${out%.*}.sorted.chain
 
 
 # Collect info about chromosome sizes for netting
-twoBitInfo data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.2bit data/genome/rm_genomes/glum.chromInfo
-twoBitInfo data/genome/GCA_000004655.2_ASM465v1_genomic.2bit data/genome/rm_genomes/indica.chromInfo
+#twoBitInfo data/genome/GCA_000576495.1_Oryza_glumaepatula_v1.5_genomic.2bit data/genome/rm_genomes/glum.chromInfo
+#twoBitInfo data/genome/GCA_000004655.2_ASM465v1_genomic.2bit data/genome/rm_genomes/indica.chromInfo
 
 
 # Netting: identify alignable regions from chains
-chainNet data/genome/rm_genomes/sativa_to_glum.sorted.chain \
+chainNet ${out%.*}.sorted.chain \
 data/genome/rm_genomes/glum.chromInfo data/genome/rm_genomes/indica.chromInfo \
-data/genome/rm_genomes/sativa_to_glum.net /dev/null
+${out%.*}.net /dev/null
 
 
 # Select the right alignable regions using the nets to create the 'liftOver' file
-netChainSubset data/genome/rm_genomes/sativa_to_glum.net data/genome/rm_genomes/sativa_to_glum.sorted.chain data/genome/rm_genomes/sativa_to_glum.liftOver.chain
+netChainSubset ${out%.*}.net  ${out%.*}.sorted.chain  ${out%.*}.liftOver.chain
 
 # LiftOver!
-~/toolsfordayz/liftOver -errorHelp -multiple -minMatch=0.1 \
-data/processed/filtered_snps_bpres/domesticated/oryza_sativa.half.bed \
-data/genome/rm_genomes/sativa_to_glum.liftOver.chain \
-data/processed/filtered_snps_bpres/domesticated/oryza_sativa.half.2.converted.bed \
-data/processed/filtered_snps_bpres/domesticated/unconverted.2.bed
+#~/toolsfordayz/liftOver -errorHelp -multiple -minMatch=0.1 \
+#data/processed/filtered_snps_bpres/domesticated/oryza_sativa.half.bed \
+#${out%.*}.liftOver.chain \
+#${out%.*}.lifted.bed \
+#${out%.*}.unlifted.bed

@@ -2,7 +2,7 @@
     "__default__" :
     {
       "p" : "med2",
-      "mem" : "16G",
+      "mem" : "4G",
       "time" : "7-00:00",
       "name": "rando",
     },
@@ -126,5 +126,12 @@
       "mem" : "10G",
       "time" : "7-00:00",
       "name" : "combine_vcfs"
+    },
+    "liftover" :
+    {
+      "p" : "med2",
+      "mem" : "10G",
+      "time" : "7-00:00",
+      "name" : "liftover"
     },
 }
