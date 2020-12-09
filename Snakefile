@@ -1,18 +1,10 @@
 import config
 
-# fastq sample names for fastqc
-#FASTQ = glob_wildcards("data/rawdata/{fastq}_fq.gz").fastq
-
-# Sample names
-#SAMPLE = glob_wildcards("data/rawdata/{sample}-R1.fastq").sample
-SAMPLE = glob_wildcards("data/rawdata/trimmed/{sample}.trim_1.fq.gz").sample
-# Testing a singular sample
-#SAMPLE = ["IRIS_313-10274_120220_I297_FCC0DJBACXX_L6_RICwdsRSYHSD24-3-IPAAPEK-84"]
+### Wildcards ###
+SAMPLE = glob_wildcards("data/samples/final_set/{sample}_1.fq.gz").sample
 #print(SAMPLE)
 
-# Maf names
-MAF = glob_wildcards("data/ensemble_alignments/oind_asm465v1.v.oglu_oryza_glumaepatula_v1.5.lastz_net/oind_asm465v1.v.oglu_oryza_glumaepatula_v1.5.lastz_net.{maf}.maf").maf
-#print(MAF)
+REF = ["GLUM"]
 
 # Set number of intervals for gatk to 200
 INTERVALS = ["{:04d}".format(x) for x in list(range(200))]
@@ -25,34 +17,28 @@ rule all:
         # Trim reads
 #        trim = expand("data/rawdata/trimmed/{sample}.trim_1.fq.gz", sample = SAMPLE),
         # Aligning reads
-#        markdups = expand("data/interm/mark_dups/trim/{sample}.dedup.bam", sample = SAMPLE),
+        markdups = expand(config.mark_dups_outbam, sample = SAMPLE, REF=REF),
         # Assess quality of mapped reads
-#        bamqc = expand("reports/bamqc/fastp/{sample}_stats/qualimapReport.html", sample = SAMPLE),
+        bamqc = expand("reports/bamqc/{sample}_{REF}_stats/qualimapReport.html", sample = SAMPLE, REF=REF),
         # SNP calling
-#        hap_caller = expand(config.haplo_caller, sample = SAMPLE),
-#        split_int = expand(config.split_intervals, count = INTERVALS)
-#        combine = expand(directory("data/interim/combined_database_bpres/domesticated/trim/{count}"), count = INTERVALS),
-#        joint_geno = expand(config.joint_out, count = INTERVALS),
-#        get_snps = expand(config.get_snps_out, count = INTERVALS),
-#        hard_filter = expand(config.hard_filt, count = INTERVALS),
-#        diagnostics = expand(config.diag, count = INTERVALS)
-#        dp = expand(config.filt_dp1, count = INTERVALS),
-#        dp2 = expand(config.filt_dp2, count = INTERVALS),
-#        bgzip_vcf = expand(config.bgz_vcf, count = INTERVALS),
-#        combine = config.combine,
-#        depth_diag = "reports/filtering_bpres/oryza_glum.table"
+#        hap_caller = expand("data/gvcf/{REF}/{sample}.{REF}.g.vcf", sample = SAMPLE, REF=REF),
+#        split_int = expand("data/processed/scattered_intervals/{REF}/{count}-scattered.interval_list", count = INTERVALS, REF=REF)
+#        combine = expand(directory("data/interim/combined_database_bpres/{REF}/{count}"), count = INTERVALS, REF=REF),
+#        joint_geno = expand("data/raw/vcf_bpres/{REF}/{count}.raw.{REF}.vcf", count = INTERVALS, REF=REF),
+        # Process VCFs
+#        get_snps = expand("data/raw/vcf_bpres/{REF}/{count}.raw.snps.{REF}.vcf", count = INTERVALS, REF=REF),
+#        hard_filter = expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf", count = INTERVALS, REF=REF),
+#        diagnostics = expand("reports/filtering/gvcf_{count}.{REF}.table", count = INTERVALS, REF=REF)
+#        dp = expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp1.snps.{REF}.vcf", count = INTERVALS, REF=REF),
+#        dp2 = expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf", count = INTERVALS, REF=REF),
+#        bgzip_vcf = expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf.gz", count = INTERVALS, REF=REF),
+#        combine = expand("data/processed/filtered_snps_bpres/{REF}/oryza.{REF}.vcf.gz", REF=REF)
+###        depth_diag = "reports/filtering_bpres/oryza_glum.table"
         # Combining fitlering SNPs and INDELs all together - not just the SNPs - then merging the files together
-#        wholegenome = config.whole_genome,
-        # Liftover 
-#        swap_maf = expand("data/ensemble_alignments/swap/oind_asm465v1.v.oglu_oryza_glumaepatula_v1.5.lastz_net.{maf}.swap.maf", maf = MAF),
-#        convert__maf = expand("data/ensemble_alignments/chain/oind_asm465v1.v.oglu_oryza_glumaepatula_v1.5.lastz_net.{maf}.chain", maf = MAF),
-#        combine_chain = "data/ensemble_alignments/merged_chains/oind_asm465v1.v.oglu_oryza_glumaepatula_v1.5.lastz_net.combined.chain",
-#        rename_vcfs = "data/vcf/oryza_glum.12chrom.vcf.gz",
-        liftover_vcf = "data/lifted_vcf/oryza_sativa.half.lifted.vcf",
+#        wholegenome = expand("data/processed/filtered_snps_bpres/{REF}/wholegenome.{REF}.vcf.gz", REF=REF)
 
 # Rules
-#include: "rules/mapping.smk"
-#include: "rules/process_bam.smk"
+include: "rules/mapping.smk"
+include: "rules/process_bam.smk"
 #include: "rules/calling.smk"
 #include: "rules/filtering.smk"
-include: "rules/liftover.smk"

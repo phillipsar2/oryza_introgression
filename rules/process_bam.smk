@@ -1,8 +1,8 @@
 rule add_rg:
     input:
-        "data/sorted_bam/{sample}.sorted.bam"
+        "data/sorted_bam/{sample}.sorted.{REF}.bam"
     output:
-        bam = temp(touch("data/interm/addrg/{sample}.rg.bam"))
+        bam = temp(touch("data/interm/addrg/{sample}.rg.{REF}.bam"))
     params:
         tmp = "/scratch/aphillip/addrg/{sample}",
         sample = "{sample}"
@@ -22,11 +22,11 @@ rule add_rg:
 
 rule mark_dups:
     input:
-        config.mark_in
+        "data/interm/addrg/{sample}.rg.{REF}.bam"
     output:
-        bam = "data/interm/mark_dups/trim/{sample}.dedup.bam",
-        index = "data/interm/mark_dups/trim/{sample}.dedup.bai",
-        metrics = "qc/mark_dup/trim/{sample}_metrics.txt"
+        bam = config.mark_dups_outbam,
+        index = config.mark_dups_outbai,
+        metrics = "qc/mark_dup/{sample}_metrics.{REF}.txt"
     params:
         tmp = "/scratch/aphillip/mark_dups/{sample}"
     run:
@@ -47,11 +47,11 @@ rule mark_dups:
 # Quality metrics with qualimap
 rule bamqc:
     input:
-        "data/interm/mark_dups/{sample}.dedup.bam"
+        config.mark_dups_outbam
     output:
-        "reports/bamqc/{sample}_stats/qualimapReport.html"
+        "reports/bamqc/{sample}_{REF}_stats/qualimapReport.html"
     params:
-        dir = "reports/bamqc/{sample}_stats"
+        dir = "reports/bamqc/{sample}_{REF}_stats"
     run: 
         shell("qualimap bamqc \
         -bam {input} \

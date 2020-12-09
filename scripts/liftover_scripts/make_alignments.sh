@@ -90,6 +90,16 @@ query_net=${project_path}/analyses/last/query_net/"$query_name"_"$ref_name".net
 
 chainNet $chain_prenet $ref_size $query_size $target_net $query_net
 
+##### target_net and merged_chain move forward to the next script (chain_liftover.sh)
+
+
+
+
+
+
+
+
+
 ### ### ### ### ###
 
 ## Making 2bit files for netToAxt

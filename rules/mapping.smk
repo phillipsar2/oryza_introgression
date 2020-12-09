@@ -14,7 +14,7 @@
 #        "fastqc -o qc/fastqc -f fastq data/rawdata/*.fq.gz"
 
 
-# Trim domesticated rice reads
+# Trim Oryza sativa reads
 # Trim polyG tails (-g), use 2 threads (-w 2), minimum length is 36 (-l 36), don't filter for qualit (-Q)
 
 #rule fastp_trim:
@@ -31,18 +31,14 @@
 #        -h reports/fastp/osativa.html")
 
 
-# Align reads to the reference gnome
+# Align all individuals to a reference genome
 rule bwa_map:
     input:
         ref = config.ref,
-#        r1 = "data/rawdata/{sample}-R1.fastq",
-#        r2 = "data/rawdata/{sample}-R2.fastq"
-#        r1 = "data/rawdata/{sample}_1.fq.gz",
-#        r2 = "data/rawdata/{sample}_2.fq.gz"
-        r1 = "data/rawdata/trimmed/{sample}.trim_1.fq.gz",
-        r2 = "data/rawdata/trimmed/{sample}.trim_2.fq.gz"
+        r1 = "data/samples/final_set/{sample}_1.fq.gz",
+        r2 = "data/samples/final_set/{sample}_2.fq.gz"
     output:
-        temp("data/interm/mapped_bam/{sample}.mapped.bam")
+        temp("data/interm/mapped_bam/{sample}.mapped.{REF}bam")
     log:
         "logs/bwa_mem/{sample}.log"
     shell:
@@ -52,9 +48,9 @@ rule bwa_map:
 # Takes the input file and stores a sorted version in a different directory.
 rule samtools_sort:
     input:
-        "data/interm/mapped_bam/{sample}.mapped.bam",
+        "data/interm/mapped_bam/{sample}.mapped.{REF}.bam",
     output:
-        temp("data/sorted_bam/{sample}.sorted.bam"),
+        temp("data/sorted_bam/{sample}.sorted.{REF}.bam"),
     params:
         tmp = "/scratch/aphillip/sort_bam/{sample}"
     run:

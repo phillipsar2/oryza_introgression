@@ -45,7 +45,7 @@
     },
     "bamqc" :
     {
-      "p" : "med2",
+      "p" : "med",
       "mem" : "48G",
       "time" : "7-00:00",
       "name" : "bamqc",

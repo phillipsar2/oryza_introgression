@@ -3,11 +3,9 @@
 rule get_snps:
     input:
         ref = config.ref,
-        vcf = config.joint_out
-#        vcf = "data/raw/vcf_bpres/{count}.raw.vcf"
+        vcf = "data/raw/vcf_bpres/{REF}/{count}.raw.{REF}.vcf"
     output:
-        config.get_snps_out
-#        "data/raw/vcf_bpres/{count}.raw.snps.vcf"
+        "data/raw/vcf_bpres/{REF}/{count}.raw.snps.{REF}.vcf"
     run:
         shell("gatk SelectVariants \
         -R {input.ref} \
@@ -26,9 +24,9 @@ rule get_snps:
 rule filter_snps:
     input:
         ref = config.ref,
-        vcf = config.get_snps_out
+        vcf = "data/raw/vcf_bpres/{REF}/{count}.raw.snps.{REF}.vcf"
     output:
-        config.hard_filt
+        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf"
     run:
         shell("gatk VariantFiltration \
         -V {input.vcf} \
@@ -47,11 +45,10 @@ rule filter_snps:
 
 rule diagnostics:
     input: 
-        vcf = config.hard_filt,
+        vcf = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf",
         ref = config.ref
     output:
-        config.diag
-#        "reports/filtering/gvcf_{count}.table"
+        "reports/filtering/gvcf_{count}.{REF}.table"
     run:
         shell("gatk VariantsToTable \
         -R {input.ref} \
@@ -66,9 +63,9 @@ rule diagnostics:
 rule filter_nocall:
     input:
         ref = config.ref,
-        vcf = config.hard_filt
+        vcf = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf"
     output:
-        config.nocall
+        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.nocall.{REF}.vcf"
     run: 
         shell("gatk SelectVariants -V {input.vcf} --max-nocall-fraction 0.5 --exclude-filtered true  --restrict-alleles-to BIALLELIC -O {output}")
         
@@ -98,10 +95,10 @@ rule filter_nocall:
 
 rule filter_depth:
     input:
-        vcf = config.nocall,
+        vcf =  "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.nocall.{REF}.vcf",
         ref = config.ref
     output:
-        dp = config.filt_dp1
+        dp = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp1.snps.{REF}.vcf"
     run:
         shell("gatk VariantFiltration \
         -R {input.ref} \
@@ -112,9 +109,9 @@ rule filter_depth:
 
 rule depth_nocall:
     input:
-        config.filt_dp1
+        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp1.snps.{REF}.vcf"
     output:
-        config.filt_dp2
+        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf"
     run:
         shell("gatk SelectVariants -V {input} --exclude-filtered true -O {output}")
 
@@ -122,9 +119,9 @@ rule depth_nocall:
 
 rule bgzip_vcf:
     input:
-        config.filt_dp2
+        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf"
     output:
-        config.bgz_vcf
+        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf.gz"
     run:
         shell("bgzip {input}")
         shell("tabix -p vcf {output}")
@@ -133,9 +130,9 @@ rule bgzip_vcf:
 
 rule combine_vcfs:
     input:
-        expand(config.bgz_vcf, count = INTERVALS)
+        expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf.gz", count = INTERVALS, REF=REF)
     output:
-        config.combine
+        "data/processed/filtered_snps_bpres/{REF}/oryza.{REF}.vcf.gz"
     run:
         shell("bcftools concat {input} -Oz -o {output}")
 
@@ -146,11 +143,11 @@ rule combine_vcfs:
 
 rule filter_wholegenome:
     input:
-        vcf = config.joint_out,
+        vcf = "data/raw/vcf_bpres/{REF}/{count}.raw.{REF}.vcf",
         ref = config.ref
     output:
-        dp = config.whole_dp1,
-        dp2 = config.whole_dp2
+        dp = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp1.wholegenome.{REF}.vcf",
+        dp2 = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.wholegenome.{REF}.vcf"
     run:
         shell("gatk VariantFiltration \
         -R {input.ref} \
@@ -162,8 +159,8 @@ rule filter_wholegenome:
 
 rule combine_wgenomevcfs:
     input:
-        expand(config.whole_dp2, count = INTERVALS)
+        expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.wholegenome.{REF}.vcf", count = INTERVALS, REF=REF)
     output:
-        config.whole_genome
+        "data/processed/filtered_snps_bpres/{REF}/wholegenome.{REF}.vcf.gz"
     run:
         shell("bcftools concat {input} -Oz -o {output}")
