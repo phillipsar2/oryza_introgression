@@ -11,7 +11,7 @@ mark_dups_outbam = "data/interm/mark_dups/{REF}/{sample}.dedup.{REF}.bam"
 mark_dups_outbai = "data/interm/mark_dups/{REF}/{sample}.dedup.{REF}.bai"
 
 contig_list = "data/genome/glum.contig.list"
-sample_map = "data/processed/glum.sample_map"
+sample_map = "data/processed/GLUM.sample_map"
 
 
 

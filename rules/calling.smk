@@ -24,10 +24,10 @@ rule split_intervals:
     input:
         ref = config.ref
     output:
-        expand("data/processed/scattered_intervals/{REF}/{count}-scattered.interval_list", count = INTERVALS, REF = REF)
+        int = expand("data/processed/scattered_intervals/{REF}/{count}-scattered.interval_list", count = INTERVALS, REF = REF)
     params:
         regions = config.contig_list,
-        dir = "data/processed/scattered_intervals/{REF}"
+        dir = expand("data/processed/scattered_intervals/{REF}", REF=REF)
     run:
         shell("gatk SplitIntervals -R {input.ref} -L {params.regions} --scatter-count 200 -O {params.dir}")
 
@@ -38,12 +38,12 @@ rule split_intervals:
 rule combine_gvcfs:
     input:
         gvcfs = expand("data/gvcf/{REF}/{sample}.{REF}.g.vcf", sample = SAMPLE, REF = REF),
-        region = "data/processed/scattered_intervals/{REF}/{count}-scattered.interval_list",
+        region = "data/processed/scattered_intervals/{REF}/{interval}-scattered.interval_list",
         map = config.sample_map
     output:
-        directory("data/interm/combined_database_bpres/{REF}/{count}")
+        directory("data/interm/combined_database_bpres/{REF}/{interval}")
     params:
-        tmp = "/scratch/aphillip/genomicsdbimport/{count}"
+        tmp = "/scratch/aphillip/genomicsdbimport/{interval}"
     run:
         shell("mkdir -p {params.tmp}")
         shell("gatk --java-options \"-Xmx90g -Xms90g\" \

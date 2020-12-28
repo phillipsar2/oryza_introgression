@@ -40,7 +40,7 @@ rule bwa_map:
     output:
         temp("data/interm/mapped_bam/{sample}.mapped.{REF}bam")
     log:
-        "logs/bwa_mem/{sample}.log"
+        "logs/bwa_mem/{REF}/{sample}.log"
     shell:
         "(bwa mem -t 8 {input.ref} {input.r1} {input.r2} |"
         "samtools view -Sb > {output}) 2> {log}"
@@ -57,4 +57,5 @@ rule samtools_sort:
         shell("mkdir -p {params.tmp}")
         shell("samtools sort -T {params.tmp} {input} > {output}")
         shell("rm -rf {params.tmp}")
+
 
