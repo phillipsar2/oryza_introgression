@@ -58,13 +58,13 @@ rule combine_gvcfs:
 
 rule joint_geno:
     input:
-        dir = directory("data/interm/combined_database_bpres/{REF}/{count}"),
+        dir = directory("data/interm/combined_database_bpres/{REF}/{interval}"),
         ref = config.ref
     output:
-        "data/raw/vcf_bpres/{REF}/{count}.raw.{REF}.vcf"
+        "data/raw/vcf_bpres/{REF}/{interval}.raw.{REF}.vcf"
     params:
-        db = "gendb://data/interm/combined_database_bpres/{REF}/{count}",
-        region = "data/processed/scattered_intervals/{REF}/{count}-scattered.interval_list",
+        db = "gendb://data/interm/combined_database_bpres/{REF}/{interval}",
+        region = "data/processed/scattered_intervals/{REF}/{interval}-scattered.interval_list",
     run:
         shell("gatk GenotypeGVCFs \
         -R {input.ref} \

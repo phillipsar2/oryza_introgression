@@ -17,14 +17,14 @@ rule all:
         # Trim reads
 #        trim = expand("data/rawdata/trimmed/{sample}.trim_1.fq.gz", sample = SAMPLE),
         # Aligning reads
-        markdups = expand(config.mark_dups_outbam, sample = SAMPLE, REF=REF),
+#        markdups = expand(config.mark_dups_outbam, sample = SAMPLE, REF=REF),
         # Assess quality of mapped reads
-        bamqc = expand("reports/bamqc/{sample}_{REF}_stats/qualimapReport.html", sample = SAMPLE, REF=REF),
+#        bamqc = expand("reports/bamqc/{sample}_{REF}_stats/qualimapReport.html", sample = SAMPLE, REF=REF),
         # SNP calling
 #        hap_caller = expand("data/gvcf/{REF}/{sample}.{REF}.g.vcf", sample = SAMPLE, REF=REF),
-#        split_int = expand("data/processed/scattered_intervals/{REF}/{count}-scattered.interval_list", count = INTERVALS, REF=REF)
-#        combine = expand(directory("data/interim/combined_database_bpres/{REF}/{count}"), count = INTERVALS, REF=REF),
-#        joint_geno = expand("data/raw/vcf_bpres/{REF}/{count}.raw.{REF}.vcf", count = INTERVALS, REF=REF),
+#        split_int = expand("data/processed/scattered_intervals/{REF}/{count}-scattered.interval_list", count = INTERVALS, REF=REF),
+#        combine = directory(expand("data/interm/combined_database_bpres/{REF}/{interval}", interval = INTERVALS, REF=REF)),
+        joint_geno = expand("data/raw/vcf_bpres/{REF}/{interval}.raw.{REF}.vcf", interval = INTERVALS, REF=REF),
         # Process VCFs
 #        get_snps = expand("data/raw/vcf_bpres/{REF}/{count}.raw.snps.{REF}.vcf", count = INTERVALS, REF=REF),
 #        hard_filter = expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf", count = INTERVALS, REF=REF),
@@ -40,5 +40,5 @@ rule all:
 # Rules
 include: "rules/mapping.smk"
 include: "rules/process_bam.smk"
-#include: "rules/calling.smk"
+include: "rules/calling.smk"
 #include: "rules/filtering.smk"
