@@ -24,8 +24,8 @@ rule mark_dups:
     input:
         "data/interm/addrg/{sample}.rg.{REF}.bam"
     output:
-        bam = config.mark_dups_outbam,
-        index = config.mark_dups_outbai,
+        bam = "data/interm/mark_dups/{REF}/{sample}.dedup.{REF}.bam",
+        index = "data/interm/mark_dups/{REF}/{sample}.dedup.{REF}.bai",
         metrics = "qc/mark_dup/{sample}_metrics.{REF}.txt"
     params:
         tmp = "/scratch/aphillip/mark_dups/{sample}"
@@ -47,7 +47,7 @@ rule mark_dups:
 # Quality metrics with qualimap
 rule bamqc:
     input:
-        config.mark_dups_outbam
+        "data/interm/mark_dups/{REF}/{sample}.dedup.{REF}.bam"
     output:
         "reports/bamqc/{sample}_{REF}_stats/qualimapReport.html"
     params:

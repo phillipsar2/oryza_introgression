@@ -1,7 +1,7 @@
 {
     "__default__" :
     {
-      "p" : "med2",
+      "p" : "bigmemm",
       "mem" : "4G",
       "time" : "7-00:00",
       "name": "rando",
@@ -45,7 +45,7 @@
     },
     "bamqc" :
     {
-      "p" : "med",
+      "p" : "med2",
       "mem" : "48G",
       "time" : "7-00:00",
       "name" : "bamqc",

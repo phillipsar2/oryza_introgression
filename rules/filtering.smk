@@ -3,15 +3,34 @@
 rule get_snps:
     input:
         ref = config.ref,
-        vcf = "data/raw/vcf_bpres/{REF}/{count}.raw.{REF}.vcf"
+        vcf = "data/raw/vcf_bpres/{REF}/{interval}.raw.{REF}.vcf"
     output:
-        "data/raw/vcf_bpres/{REF}/{count}.raw.snps.{REF}.vcf"
+        "data/raw/vcf_bpres/{REF}/{interval}.raw.snps.{REF}.vcf"
     run:
         shell("gatk SelectVariants \
         -R {input.ref} \
         -V {input.vcf} \
         -select-type SNP \
         -O {output}")
+
+
+# Filtering diagnostics
+# Extract variant quality scores
+# https://evodify.com/gatk-in-non-model-organism/
+
+rule diagnostics:
+    input:
+        vcf = "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.snps.{REF}.vcf",
+        ref = config.ref
+    output:
+        "reports/filtering/gvcf_{interval}.{REF}.table"
+    run:
+        shell("gatk VariantsToTable \
+        -R {input.ref} \
+        -V {input.vcf} \
+        -F CHROM -F POS -F QUAL -F QD -F DP -F MQ -F MQRankSum -F FS -F ReadPosRankSum -F SOR -F AD \
+        -O {output}")
+
 
 
 # Hard filter SNPs
@@ -24,9 +43,9 @@ rule get_snps:
 rule filter_snps:
     input:
         ref = config.ref,
-        vcf = "data/raw/vcf_bpres/{REF}/{count}.raw.snps.{REF}.vcf"
+        vcf = "data/raw/vcf_bpres/{REF}/{interval}.raw.snps.{REF}.vcf"
     output:
-        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf"
+        "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.snps.{REF}.vcf"
     run:
         shell("gatk VariantFiltration \
         -V {input.vcf} \
@@ -39,23 +58,6 @@ rule filter_snps:
         -filter \"ReadPosRankSum < -8.0\" --filter-name \"ReadPosRankSum-8\" \
         -O {output}")
 
-# Filtering diagnostics
-# Extract variant quality scores
-# https://evodify.com/gatk-in-non-model-organism/
-
-rule diagnostics:
-    input: 
-        vcf = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf",
-        ref = config.ref
-    output:
-        "reports/filtering/gvcf_{count}.{REF}.table"
-    run:
-        shell("gatk VariantsToTable \
-        -R {input.ref} \
-        -V {input.vcf} \
-        -F CHROM -F POS -F QUAL -F QD -F DP -F MQ -F MQRankSum -F FS -F ReadPosRankSum -F SOR -F AD \
-        -O {output}")
-
 
 # Filter SNPs to only biallelic
 # --max-nocall-fraction is 0 for O. glum and 0.33 for O. sativa
@@ -63,74 +65,76 @@ rule diagnostics:
 rule filter_nocall:
     input:
         ref = config.ref,
-        vcf = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.snps.{REF}.vcf"
+        vcf = "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.snps.{REF}.vcf"
     output:
-        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.nocall.{REF}.vcf"
+        "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.nocall.{REF}.vcf"
     run: 
-        shell("gatk SelectVariants -V {input.vcf} --max-nocall-fraction 0.5 --exclude-filtered true  --restrict-alleles-to BIALLELIC -O {output}")
+        shell("gatk SelectVariants -V {input.vcf} --exclude-filtered true  --restrict-alleles-to BIALLELIC -O {output}")
         
-
-# Diagnositc filters look good. Continue filtering for depth. 
 
 # Evaluate depth across samples to set DP filter
 
-#rule depth:
-#    input:
-#        vcf = "data/processed/filtered_snps_bpres/oryza_glum.vcf.gz",
-#        vcf = "data/processed/filtered_snps_bpres/depth_analysis.vcf.gz",
-#        ref = config.ref
-#    output:
-#        dp = config.depth_table
-#    run:
+rule depth:
+    input:
+        vcf = "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.nocall.{REF}.vcf",
+        ref = config.ref
+    output:
+        dp = "reports/filtering/depth.{interval}.filtered.nocall.{REF}.table"
+    run:
 #        shell("tabix -p vcf {input.vcf}")
-#        shell("gatk VariantsToTable \
-#        -R {input.ref} \
-#        -V {input.vcf} \
-#        -F CHROM -F POS -GF DP \
-#        -O {output.dp}")
+        shell("gatk VariantsToTable \
+        -R {input.ref} \
+        -V {input.vcf} \
+        -F CHROM -F POS -GF DP \
+        -O {output.dp}")
+
+
 
 # Fitlter by depth of each individual
-# O. glum samples filtered 3 < DP < 77 (inbreeding)
-# O. sativa samples filtered 3 < DP < 90 (intbreeding)
+# GLUM aligned samples filtered 3 < DP < 100
+# O. sativa samples filtered 3 < DP < 90 
 
 rule filter_depth:
     input:
-        vcf =  "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.nocall.{REF}.vcf",
+        vcf =  "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.nocall.{REF}.vcf",
         ref = config.ref
     output:
-        dp = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp1.snps.{REF}.vcf"
+        dp = config.filt_depth
     run:
         shell("gatk VariantFiltration \
         -R {input.ref} \
         -V {input.vcf} \
-        -G-filter \"DP < 3 || DP > 90\" \
-        -G-filter-name \"DP_3-90\" \
+        -G-filter \"DP < 3 || DP > 100\" \
+        -G-filter-name \"DP_3-100\" \
         --set-filtered-genotype-to-no-call true -O {output.dp}")
+
+
+# filter snps for genotype missingness
 
 rule depth_nocall:
     input:
-        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp1.snps.{REF}.vcf"
+        config.filt_depth
     output:
-        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf"
+        config.dp_nocall
     run:
-        shell("gatk SelectVariants -V {input} --exclude-filtered true -O {output}")
+        shell("gatk SelectVariants -V {input} --exclude-filtered true --max-nocall-fraction 0.1 -O {output}")
 
 # gzip vcfs
 
 rule bgzip_vcf:
     input:
-        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf"
+        config.dp_nocall
     output:
-        "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf.gz"
+        config.bgzip_vcf
     run:
         shell("bgzip {input}")
         shell("tabix -p vcf {output}")
 
-# Combine individual vcfs with bcftools
+# Combine interval vcfs with bcftools
 
 rule combine_vcfs:
     input:
-        expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.snps.{REF}.vcf.gz", count = INTERVALS, REF=REF)
+        expand(config.bgzip_vcf, interval = INTERVALS, REF=REF)
     output:
         "data/processed/filtered_snps_bpres/{REF}/oryza.{REF}.vcf.gz"
     run:
@@ -143,11 +147,11 @@ rule combine_vcfs:
 
 rule filter_wholegenome:
     input:
-        vcf = "data/raw/vcf_bpres/{REF}/{count}.raw.{REF}.vcf",
+        vcf = "data/raw/vcf_bpres/{REF}/{interval}.raw.{REF}.vcf",
         ref = config.ref
     output:
-        dp = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp1.wholegenome.{REF}.vcf",
-        dp2 = "data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.wholegenome.{REF}.vcf"
+        dp = "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.dp1.wholegenome.{REF}.vcf",
+        dp2 = "data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.dp2.nocall.wholegenome.{REF}.vcf"
     run:
         shell("gatk VariantFiltration \
         -R {input.ref} \
@@ -159,7 +163,7 @@ rule filter_wholegenome:
 
 rule combine_wgenomevcfs:
     input:
-        expand("data/processed/filtered_snps_bpres/{REF}/{count}.filtered.dp2.nocall.wholegenome.{REF}.vcf", count = INTERVALS, REF=REF)
+        expand("data/processed/filtered_snps_bpres/{REF}/{interval}.filtered.dp2.nocall.wholegenome.{REF}.vcf", interval = INTERVALS, REF=REF)
     output:
         "data/processed/filtered_snps_bpres/{REF}/wholegenome.{REF}.vcf.gz"
     run:
